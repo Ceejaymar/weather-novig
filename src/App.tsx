@@ -6,14 +6,15 @@ import { useWeather } from './hooks/useWeather';
 import './App.css';
 
 function App() {
-	const { data } = useWeather();
+	const { data, isPending, isError } = useWeather();
 
 	return (
 		<>
+			{console.log('in app', data)}
 			<Navbar />
 			<WeatherControls />
-			<WeatherDetails />
-			<WeatherGraph />
+			{isPending ? <div>Loading...</div> : <WeatherDetails data={data} />}
+			{isPending ? <div>Loading...</div> : <WeatherGraph data={data.days[0]} />}
 		</>
 	);
 }
