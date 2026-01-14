@@ -9,6 +9,9 @@ import {
 	Title,
 	Tooltip,
 } from 'chart.js';
+import type { DayData, HourData, TimeOfDay } from '../types/types';
+import { graphOptions } from '../config/graph-options';
+import { filterHours } from '../utils/filter-hours';
 
 Chart.register(
 	CategoryScale,
@@ -20,15 +23,28 @@ Chart.register(
 	Tooltip,
 );
 
-export default function WeatherGraph({ data }: unknown) {
-	console.log('in weather graph', data);
+type WeatherGraph = {
+	data: DayData;
+	timeOfDay: TimeOfDay;
+};
+
+export default function WeatherGraph({ data, timeOfDay }: WeatherGraph) {
+	const filteredHours = filterHours(data, timeOfDay);
+	const options = graphOptions;
+
 	const chartData = {
-		labels: data?.hours.map((hour: unknown) => hour.datetime),
+		labels: filteredHours.map((hour: HourData) => {
+			const h = parseInt(hour.datetime.split(':')[0], 10);
+			const ampm = h >= 12 ? 'PM' : 'AM';
+			const displayHour = h % 12 || 12;
+			return `${displayHour}${ampm}`;
+		}),
 		datasets: [
 			{
 				label: 'Temperature',
-				data: data?.hours.map((hour: unknown) => hour.temp),
-				borderColor: 'rgb(255, 99, 132)',
+				data: filteredHours.map((hour: HourData) => hour.temp),
+				borderColor: 'rgb(34, 197, 94)',
+				backgroundColor: 'rgb(34, 197, 94)',
 				fill: false,
 				yAxisID: 'yTemp',
 				pointRadius: 0,
@@ -36,8 +52,9 @@ export default function WeatherGraph({ data }: unknown) {
 			},
 			{
 				label: 'Wind speed',
-				data: data?.hours.map((hour: unknown) => hour.windspeed),
-				borderColor: 'rgb(54, 162, 235)',
+				data: filteredHours.map((hour: HourData) => hour.windspeed),
+				borderColor: 'rgb(239, 68, 68)',
+				backgroundColor: 'rgb(239, 68, 68)',
 				fill: false,
 				yAxisID: 'yWind',
 				pointRadius: 0,
@@ -45,8 +62,9 @@ export default function WeatherGraph({ data }: unknown) {
 			},
 			{
 				label: 'Humidity',
-				data: data?.hours.map((hour: unknown) => hour.humidity),
-				borderColor: 'rgb(222, 247, 122)',
+				data: filteredHours.map((hour: HourData) => hour.humidity),
+				borderColor: 'rgb(59, 130, 246)',
+				backgroundColor: 'rgb(59, 130, 246)',
 				fill: false,
 				yAxisID: 'yHumidity',
 
@@ -56,51 +74,9 @@ export default function WeatherGraph({ data }: unknown) {
 		],
 	};
 
-	const options = {
-		maintainAspectRatio: false,
-		scales: {
-			x: {
-				grid: {
-					display: false,
-					drawTicks: false,
-				},
-				border: {
-					display: false,
-				},
-				ticks: {
-					color: '#9ca3af',
-					font: { size: 11 },
-				},
-			},
-			yTemp: {
-				display: false,
-			},
-			yWind: {
-				display: false,
-			},
-			yHumidity: {
-				display: false,
-			},
-		},
-		plugins: {
-			tooltip: {
-				mode: 'index' as const,
-				intersect: false,
-			},
-		},
-	};
-
 	return (
-		<div style={styles.container}>
+		<div className='w-full h-[275px] relative mt-6 max-w-full overflow-hidden'>
 			<Line data={chartData} options={options} />
 		</div>
 	);
 }
-
-const styles = {
-	container: {
-		position: 'relative',
-		width: '100%',
-		height: '250px',
-	},
-};
